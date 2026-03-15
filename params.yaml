@@ -1,0 +1,12 @@
+preprocess_data:
+  random_seed: 3214
+  test_size: 0.3
+  
+train: 
+ colsample_bytree: 0.5228880663375576
+ gamma: 0.0
+ learning_rate: 0.001
+ max_depth: 24
+ n_estimators: 732
+ scale_pos_weight: 30
+ subsample: 0.4120837780650759

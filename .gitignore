@@ -1,0 +1,17 @@
+# Python Environment
+ml_classifier.egg-info
+__pycache__
+build
+.conda
+
+# Data
+data/**/*.csv
+
+# Models
+models/*.joblib
+
+# Artifacts
+*.joblib
+
+# Metrics
+metrics/*.json

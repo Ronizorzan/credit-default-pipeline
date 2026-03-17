@@ -1,15 +1,11 @@
-import json
 import logging
 import os
 import yaml
-
 import joblib
 import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
-
 
 logger = logging.getLogger("src.model_training.train_model")
 
@@ -37,8 +33,8 @@ def load_params() -> dict[str, float | int]:
     return params["train"]
 
 
-def prepare_data(train_data: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
-    """Prepare data for XGBClassifier by separating features and target into train and validation data.
+def prepare_data(train_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
+    """Prepare data for XGBClassifier by separating features and target data.
 
     Args:
         train_data (pd.DataFrame): Full training dataset.
@@ -46,37 +42,30 @@ def prepare_data(train_data: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
     Returns:
         tuple containing:
             pd.DataFrame: Training features
-            np.ndarray: Encoded training labels            
+            pd.Series: Training labels           
     """
-    # Separate features and target for train data
-    X_train = train_data.drop("target", axis=1)
-    y_train = train_data["target"]
-
-    # Splits the data into train and validation data
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=3214)
+    X = train_data.drop("target", axis=1)
+    y = train_data["target"]
     
-    
-    return X_train, y_train, X_val, y_val
+    return X, y
 
 
 def create_model(
-        X_train: pd.DataFrame, y_train: np.array,
-        X_val: pd.DataFrame, y_val: np.array,
-    params: dict[str, int | float] ) -> XGBClassifier:
-    """Create a XGBClassifier model.
+    X: pd.DataFrame, y: pd.Series,    
+    params: dict[str, int | float]
+) -> XGBClassifier:
+    """Create and train an XGBClassifier model.
 
-    Args:    
-        X_train: DataFrame with features columns.
-        y_train: Target Column to be predicted.        
-        params (dict[str, int | float]): Model hyperparameters.
+    Args:
+        X (pd.DataFrame): Training features
+        y (pd.Series): Training labels        
+        params (dict): Model hyperparameters
 
     Returns:
-        XFBClassifier: Trainned XGB Model.
+        XGBClassifier: Trained XGB model
     """
-    model = XGBClassifier(**params).fit(X_train, y_train, eval_set=[(X_val, y_val)])
-    y_pred = model.predict(X_val)
-    report = classification_report(y_val, y_pred)
-    logger.info(f"Classification report: \n{report}")
+    model = XGBClassifier(**params)
+    model.fit(X, y, verbose=False)
 
     return model
 
@@ -85,36 +74,27 @@ def save_training_artifacts(model: XGBClassifier) -> None:
     """Save model artifacts to disk.
 
     Args:
-        model (XGBClassifier): Trained XGB model.                
+        model (XGBClassifier): Trained XGB model
     """
-    artifacts_dir = "artifacts"
     models_dir = "models"
-    model_path = os.path.join(models_dir, "xgb_model.joblib")    
+    os.makedirs(models_dir, exist_ok=True)
 
-    # Save the model
+    model_path = os.path.join(models_dir, "xgb_model.joblib")
     logger.info(f"Saving model to {model_path}")
     joblib.dump(model, model_path)
-    
+
 
 def train_model(train_data: pd.DataFrame, params: dict[str, int | float]) -> None:
-    """Train a Keras model, logging metrics and artifacts with MLflow.
+    """Train an XGBClassifier model, logging metrics and artifacts.
 
     Args:
-        train_data (pd.DataFrame): Training dataset.
-        params (dict[str, int | float]): Model hyperparameters.
-    """   
-    # Prepare the data
-    X_train, y_train, X_val, y_val = prepare_data(train_data)
-    
-    # Create the model
-    model = create_model(
-        X_train, y_train, 
-        X_val, y_val, params=params
-    )
-    
-
+        train_data (pd.DataFrame): Training dataset
+        params (dict[str, int | float]): Model hyperparameters
+    """
+    X_train, y_train= prepare_data(train_data)
+    model = create_model(X_train, y_train, params=params)
     save_training_artifacts(model)
-     
+
 
 def main() -> None:
     """Main function to orchestrate the model training process."""

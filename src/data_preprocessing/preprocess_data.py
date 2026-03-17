@@ -59,7 +59,7 @@ def preprocess_data( train_data: pd.DataFrame, test_data: pd.DataFrame ) -> tupl
         Tuple containing:
             pd.DataFrame: Processed training data
             pd.DataFrame: Processed test data
-            SimpleImputer: Fitted imputer
+            Preprocessor: Fitted preprocessor for numerical and categorical columns
     """
     logger.info("Preprocessing data...")
 
@@ -145,7 +145,7 @@ def save_artifacts( train_data: pd.DataFrame, test_data: pd.DataFrame, preproces
 
 
 def main() -> None:
-     """Main function to orchestrate the preprocessing pipeline.""" 
+     """Main function to orchestrate the preprocessing pipeline."""      
      raw_data = load_data()
      train_data, test_data = split_data(raw_data)
      train_processed, test_processed, imputer = preprocess_data(train_data, test_data)

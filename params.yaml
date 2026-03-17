@@ -3,10 +3,14 @@ preprocess_data:
   test_size: 0.3
   
 train: 
- colsample_bytree: 0.5228880663375576
+ colsample_bytree: 0.7583231848290068
  gamma: 0.0
- learning_rate: 0.001
- max_depth: 24
- n_estimators: 732
+ learning_rate: 0.0038639770201776957
+ max_depth: 50
+ n_estimators: 609
  scale_pos_weight: 30
- subsample: 0.4120837780650759
+ subsample: 0.4
+
+engineer_features:
+  n_features_to_select: 6
+  n_estimators: 200

@@ -57,13 +57,13 @@ To create a solid and scalable foundation for data science and machine learning 
 
 ## Dependencies
 
-The project requires Python 3.12+ and the packages informed in `pyproject.toml`.
+The project requires Python 3.11+ and the packages informed in `pyproject.toml`.
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/Ronizorzan/credit-default-pipeline.git
 cd mlops_project
 ```
 
@@ -85,7 +85,7 @@ The neural network consists of a multilayer perceptron with 2 hidden layers.
 The training process generates the following files:
 
 In the `models/` directory:
-- `model.keras`: Trained TensorFlow model
+- `xgb_model.joblib`: Trained XGBoostClssifier model
 
 In the `artifacts/` directory:
 - `[features]_mean_imputer.joblib`: Feature imputer for missing values
@@ -168,8 +168,3 @@ The web application will be available at `http://localhost:5001`.
 1. **Web Interface**: Upload a CSV file with breast cancer features through the web interface
 2. **API**: The `/upload` endpoint accepts CSV files and returns predictions
 
-#### Required CSV Format
-
-Your CSV file must contain all 30 breast cancer features with exact column names:
-- mean radius, mean texture, mean perimeter, mean area, mean smoothness, etc.
-- See `sklearn.datasets.load_breast_cancer().feature_names` for the complete list

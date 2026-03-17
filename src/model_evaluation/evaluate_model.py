@@ -5,7 +5,7 @@ import os
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.compose import ColumnTransformer
 from xgboost import XGBClassifier
 
@@ -13,21 +13,21 @@ logger = logging.getLogger("src.model_evaluation.evaluate_model")
 
 
 def load_model() -> XGBClassifier:
-    """Load the trained Keras model from disk.
+    """Load the trained XGBClassifier model from disk.
 
     Returns:
-        XGBClassifier: Loaded Keras model.
+        XGBClassifier: Loaded XGBClassifier model.
     """
     model_path = "models/xgb_model.joblib"
     model = joblib.load(model_path)
     return model
 
 
-def load_encoder() -> ColumnTransformer:
-    """Load the label encoder from disk.
+def load_imputer() -> ColumnTransformer:
+    """Load the Column Transformer from disk.
 
     Returns:
-        LabelEncoder: Loaded label encoder.
+        ColumnTransformer: Loaded Column Transformer.
     """
     preprocessor_path = "artifacts/preprocessor.joblib"
     preprocessor = joblib.load(preprocessor_path)
@@ -56,14 +56,13 @@ def evaluate_model(
     """Evaluate the model and generate performance metrics.
 
     Args:
-        model (tf.keras.Model): Trained Keras model.
-        encoder (LabelEncoder): Fitted label encoder.
+        model (XGBClassifier): Trained XGBClassifier model.
+        Imputer (ColumnTransformer): Fitted Column Transformer.
         X (pd.DataFrame): Test features.
         y_true (pd.Series): True labels.
     """
     # Generate model predictions
-    y_pred = model.predict(X)
-    #y_pred = np.argmax(y_pred_proba, axis=1)
+    y_pred = model.predict(X)    
 
     # Calculate evaluation metrics
     report = classification_report(y_true, y_pred, output_dict=True)
@@ -72,8 +71,7 @@ def evaluate_model(
 
     # Log metrics
     os.makedirs("metrics", exist_ok=True)
-    logger.info(f"Classification Report:\n{classification_report(y_true, y_pred)}\nConfusion_matrix:\n{cm}")
-    ConfusionMatrixDisplay(cm).plot()
+    logger.info(f"Classification Report:\n{classification_report(y_true, y_pred)}\nConfusion_matrix:\n{cm}")    
     evaluation_path = "metrics/evaluation.json"
     with open(evaluation_path, "w") as f:
         json.dump(evaluation, f, indent=2)
@@ -82,7 +80,7 @@ def evaluate_model(
 def main() -> None:
     """Main function to orchestrate the model evaluation process."""
     model = load_model()
-    encoder = load_encoder()
+    encoder = load_imputer()
     X, y = load_test_data()
     evaluate_model(model, encoder, X, y)
     logger.info("Model evaluation completed")

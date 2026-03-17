@@ -103,8 +103,8 @@ def engineer_features(
             X = X.toarray()
         return pd.DataFrame(X, columns=columns[:X.shape[1]])
 
-    train_processed = to_dataframe(X_train, train_preprocessed.drop("target", axis=1).columns)
-    test_processed = to_dataframe(X_test, test_preprocessed.drop("target", axis=1).columns)
+    train_processed = to_dataframe(X_train, train_preprocessed.drop(["target", "student"], axis=1).columns)
+    test_processed = to_dataframe(X_test, test_preprocessed.drop(["target", "student"], axis=1).columns)
 
     # Merge target back
     train_processed["target"] = train_preprocessed["target"].values

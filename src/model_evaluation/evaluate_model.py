@@ -4,6 +4,7 @@ import os
 
 import joblib
 import numpy as np
+import mlflow
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.compose import ColumnTransformer
@@ -57,25 +58,49 @@ def evaluate_model(
 
     Args:
         model (XGBClassifier): Trained XGBClassifier model.
-        Imputer (ColumnTransformer): Fitted Column Transformer.
+        (ColumnTransformer): Fitted Column Transformer.
         X (pd.DataFrame): Test features.
         y_true (pd.Series): True labels.
     """
-    # Generate model predictions
-    y_pred = model.predict(X)    
+    # Set up Mlflow experiment
+    mlflow.set_experiment("credit_card_experiment")
 
-    # Calculate evaluation metrics
-    report = classification_report(y_true, y_pred, output_dict=True)
-    cm = confusion_matrix(y_true, y_pred)
-    evaluation = {"classification_report": report, "confusion_matrix": cm.tolist()}
+    # Get run_id for latest Mlflow run
+    runs = mlflow.search_runs(
+        experiment_ids=[os.getenv("MLFLOW_EXPERIMENT_ID")],
+        order_by=["start_time DESC"]
+    )
+    run_id = runs.iloc[0].run_id
+    if runs.empty:
+        logger.info("No MLflow runs were found for this experiment.")
 
-    # Log metrics
-    os.makedirs("metrics", exist_ok=True)
-    logger.info(f"Classification Report:\n{classification_report(y_true, y_pred)}\nConfusion_matrix:\n{cm}")    
-    evaluation_path = "metrics/evaluation.json"
-    with open(evaluation_path, "w") as f:
-        json.dump(evaluation, f, indent=2)
+    # Start the Mlflow run
+    with mlflow.start_run(run_id=run_id):
 
+        # Generate model predictions
+        y_pred = model.predict(X)    
+
+        # Calculate evaluation metrics
+        report = classification_report(y_true, y_pred, output_dict=True)
+        cm = confusion_matrix(y_true, y_pred)
+        evaluation = {"classification_report": report, "confusion_matrix": cm.tolist()}
+
+        # Log metrics (DVC)
+        os.makedirs("metrics", exist_ok=True)
+        logger.info(f"Classification Report:\n{classification_report(y_true, y_pred)}\nConfusion_matrix:\n{cm}")    
+        evaluation_path = "metrics/evaluation.json"
+        with open(evaluation_path, "w") as f:
+            json.dump(evaluation, f, indent=2)
+
+        
+        # Log metrics (Mlflow)        
+        mlflow.log_metrics({
+            "test_accuracy": report["accuracy"],
+            "test_precision_weighted": report["weighted avg"]["precision"],
+            "test_recall_weighted": report["weighted avg"]["recall"],
+			"test_f1_weighted": report["weighted avg"]["f1-score"]
+        })
+        mlflow.log_artifact(evaluation_path, "metrics")
 
 def main() -> None:
     """Main function to orchestrate the model evaluation process."""

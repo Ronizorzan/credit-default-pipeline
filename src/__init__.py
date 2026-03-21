@@ -1,4 +1,15 @@
 import logging
+import dagshub
+from dotenv import load_dotenv
+
+# Environment
+load_dotenv()
+
+# Initialize DagsHub with Credentials
+dagshub.init(
+    repo_owner="Ronizorzan",
+    repo_name="credit-default-pipeline"
+)
 
 # Configure the logging strategy
 logging.basicConfig(

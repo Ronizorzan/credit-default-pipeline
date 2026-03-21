@@ -3,10 +3,11 @@ import logging
 import os
 
 import joblib
+import mlflow
 import pandas as pd
+from mlflow.tracking import MlflowClient
 from flask import Flask, render_template, request
-from sklearn.datasets import load_breast_cancer
-from tensorflow.keras.models import load_model
+
 
 logger = logging.getLogger("app.main")
 
@@ -24,23 +25,48 @@ class ModelService:
         models_dir = "models"
 
         # Define paths to the preprocessing artifacts
-        features_imputer_path = os.path.join(
-            artifacts_dir, "[features]_mean_imputer.joblib"
+        balance_discretizer_path = os.path.join(
+            artifacts_dir, "balance_discretizer.joblib"
         )
-        features_scaler_path = os.path.join(artifacts_dir, "[features]_scaler.joblib")
+        feature_selector_path = os.path.join(artifacts_dir, "feature_selector.joblib")
+        preprocessor_path = os.path.join(artifacts_dir, "preprocessor.joblib")
         target_encoder_path = os.path.join(
-            artifacts_dir, "[target]_one_hot_encoder.joblib"
+            artifacts_dir, "target_encoder.joblib"
         )
-        # Define path to the model file
-        model_path = os.path.join(models_dir, "model.keras")
+        
+        # Load model from registry
+        logger.info("Loading registered model from MLflow Model Registry")
+        self.model = mlflow.xgboost.load_model("models:/xgb_model/latest")
 
-        # Load all required artifacts
-        self.features_imputer = joblib.load(features_imputer_path)
-        self.features_scaler = joblib.load(features_scaler_path)
+        # Get run_id from model version metadata
+        client = MlflowClient()
+        run_id = client.get_registered_model("xgb_model").latest_versions[0].run_id
+
+        # Load related artifacts
+        logger.info(f"Loading artifacts from run {run_id}")
+        artifacts_dir = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="")
+
+        preprocessor_path = os.path.join(artifacts_dir, "preprocessor.joblib")
+        self.preprocessor = joblib.load(preprocessor_path)
+        balance_discretizer_path = os.path.join(artifacts_dir, "balance_discretizer.joblib")
+        self.balance_discretizer = joblib.load(balance_discretizer_path)
+        target_encoder_path = os.path.join(artifacts_dir, "target_encoder.joblib")
         self.target_encoder = joblib.load(target_encoder_path)
-        self.model = load_model(model_path)
+        feature_selector_path = os.path.join(artifacts_dir, "feature_selector.joblib")
+        self.feature_selector = joblib.load(feature_selector_path)
+        
+        logger.info("Successfully loaded model and related artifacts")
 
-        logger.info("Successfully loaded all artifacts")
+
+        
+        # Load all required artifacts
+        #self.preprocessor = joblib.load(preprocessor_path)
+        #self.balance_discretizer = joblib.load(balance_discretizer_path)        
+        #self.target_encoder = joblib.load(target_encoder_path)
+        #self.feature_selector = joblib.load(feature_selector_path)        
+        #self.model = joblib.load(model_path)
+
+        # logger.info("Successfully loaded all artifacts")
 
     def predict(self, features: pd.DataFrame) -> pd.Series:
         """Make predictions using the full pipeline.
@@ -52,11 +78,13 @@ class ModelService:
             Series containing the predictions
         """
         # Apply transformations in sequence
-        X_imputed = self.features_imputer.transform(features)
-        X_scaled = self.features_scaler.transform(X_imputed)
+        X_imputed = self.preprocessor.transform(features)    
+        X_discretized = self.balance_discretizer.transform(X_imputed)
+        X_encoded = self.target_encoder.transform(X_discretized)
+        X_selected = self.feature_selector.transform(X_encoded)
 
         # Get model predictions
-        y_pred = self.model.predict(X_scaled)
+        y_pred = self.model.predict(X_selected)
 
         # Decode predictions
         y_decoded = self.target_encoder.inverse_transform(y_pred)
@@ -85,14 +113,14 @@ def create_routes(app: Flask) -> None:
             features = pd.read_csv(io.StringIO(content))
 
             # Validate column names against breast cancer dataset
-            expected_features = load_breast_cancer().feature_names
+            expected_features = pd.read_csv("data/raw/raw.csv").columns
             missing_cols = [
                 col for col in expected_features if col not in features.columns
             ]
             if missing_cols:
                 return render_template(
                     "index.html",
-                    error=f"Missing required columns: {', '.join(missing_cols)}",
+                    error=f"Missing required columns: {', '.join(missing_cols).replace("default", "target")}",
                 )
             features = features[expected_features]
 

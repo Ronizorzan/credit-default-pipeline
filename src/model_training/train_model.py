@@ -2,10 +2,14 @@ import logging
 import os
 import yaml
 import joblib
+import json
+
+import mlflow
 import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger("src.model_training.train_model")
 
@@ -30,7 +34,7 @@ def load_params() -> dict[str, float | int]:
     """
     with open("params.yaml", "r") as f:
         params = yaml.safe_load(f)
-    return params["train"]
+    return params
 
 
 def prepare_data(train_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
@@ -54,7 +58,8 @@ def create_model(
     X: pd.DataFrame, y: pd.Series,    
     params: dict[str, int | float]
 ) -> XGBClassifier:
-    """Create and train an XGBClassifier model.
+    """Split data into train and evaluation sets.
+    Create and train an XGBClassifier model.
 
     Args:
         X (pd.DataFrame): Training features
@@ -64,8 +69,21 @@ def create_model(
     Returns:
         XGBClassifier: Trained XGB model
     """
-    model = XGBClassifier(**params)
-    model.fit(X, y, verbose=False)
+    logger.info("Splitting data and training model")
+    X_train, X_val, y_train, y_val = train_test_split(X, y, 
+                                                      test_size=params["val_split"]["test_size"], random_state=params["val_split"]["random_state"])
+        
+
+    model = XGBClassifier(**params["train"])
+    model.fit(X_train, y_train, verbose=False, eval_set=[(X_val, y_val)])
+
+    y_pred = model.predict(X_val)
+    report = classification_report(y_val, y_pred, output_dict=True)
+
+    os.makedirs("metrics", exist_ok=True)
+    metrics_path = "metrics/training.json"
+    with open(metrics_path, "w", encoding="utf-8") as file:
+        json.dump(report, file, indent=2 )
 
     return model
 
@@ -84,16 +102,59 @@ def save_training_artifacts(model: XGBClassifier) -> None:
     joblib.dump(model, model_path)
 
 
-def train_model(train_data: pd.DataFrame, params: dict[str, int | float]) -> None:
+def train_model(train_data: pd.DataFrame, params:dict[str, dict[str, int | float]]) -> None:
     """Train an XGBClassifier model, logging metrics and artifacts.
 
     Args:
         train_data (pd.DataFrame): Training dataset
         params (dict[str, int | float]): Model hyperparameters
     """
-    X_train, y_train= prepare_data(train_data)
-    model = create_model(X_train, y_train, params=params)
-    save_training_artifacts(model)
+    
+    # Set up MLflow experiment
+    mlflow.set_experiment("credit_card_experiment")
+
+    # Set up XGBoost Autolog
+    mlflow.xgboost.autolog()
+
+    # Setting MLflow if we are running a DVC experiment
+    is_experiment = os.getenv("DVC_EXP_NAME") is not None
+    extra_args = {}
+
+    if is_experiment:
+        runs = mlflow.search_runs(
+            experiment_ids=[os.getenv("MLFLOW_EXPERIMENT_ID")],
+            filter_string="tags.dvc_exp = 'True'",
+            order_by=["start_time DESC"]
+        )
+        
+        if runs.empty:
+            with mlflow.start_run() as parent_run:
+                mlflow.set_tag("dvc_exp", True)
+                parent_run_id = parent_run.info.run_id
+            
+        else:
+            parent_run_id = runs.iloc[0].run_id        
+        run_name = os.getenv("DVC_EXP_NAME")
+        extra_args = {
+            "parent_run_id": parent_run_id,
+            "run_name": run_name,
+            "nested": True}
+
+
+    with mlflow.start_run(**extra_args):
+        
+        # Log parameters to MlFlow
+        mlflow.log_params(params)
+
+        X_train, y_train= prepare_data(train_data)
+        model = create_model(X_train, y_train, params=params)
+        save_training_artifacts(model)
+
+        # Log preprocessing artifacts
+        mlflow.log_artifact("artifacts/balance_discretizer.joblib")
+        mlflow.log_artifact("artifacts/feature_selector.joblib")
+        mlflow.log_artifact("artifacts/preprocessor.joblib")
+        mlflow.log_artifact("artifacts/target_encoder.joblib")
 
 
 def main() -> None:

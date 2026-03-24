@@ -7,21 +7,51 @@
         .container { max-width: 800px; margin: 0 auto; }
         .error { color: red; }
         .success { color: green; }
+        /* Estilo global para botões */
+        input[type=submit] {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Formulário manual -->
+        <form action="/manual" method="post">
+            <h2>Inserir dados manualmente</h2>
+
+            <label for="balance">Saldo:</label>
+            <input type="number" name="balance" required><br><br>
+
+            <label for="income">Renda:</label>
+            <input type="number" name="income" required><br><br>
+
+            <label for="student">Estudante:</label>
+            <select name="student" required>
+                <option value="1">Sim</option>
+                <option value="0">Não</option>
+            </select><br><br>
+
+            <input type="submit" value="Prever">
+        </form>
+
+        <hr>
+
+        <!-- Formulário de upload -->
         <h1>Credit Card Default Prediction Interface</h1>
         <form action="/upload" method="post" enctype="multipart/form-data">
-            <p>Upload a CSV file with breast cancer features:</p>
+            <p>Upload a CSV file com os atributos:</p>
             <input type="file" name="file" accept=".csv" required>
-            <input type="submit" value="Get Predictions">
+            <input type="submit" value="Obter Previsões">
         </form>
+
+        <!-- Exibição de erros ou previsões -->
         {% if error %}
         <p class="error">{{ error }}</p>
         {% endif %}
         {% if predictions %}
-        <h2>Predictions:</h2>
+        <h2>Previsões:</h2>
         <pre>{{ predictions }}</pre>
         {% endif %}
     </div>

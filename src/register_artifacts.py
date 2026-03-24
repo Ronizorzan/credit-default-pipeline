@@ -61,13 +61,13 @@ def register_model() -> None:
     # Register the model from the run
     logger.info("Registering model")
     try:
-        client.create_registered_model("xgb_model")
+        client.create_registered_model("model")
     except mlflow.exceptions.MlflowException:
         logger.debug("Model already exists")
 
-    model_uri = f"runs:/{run_id}/xgb_model"
+    model_uri = f"runs:/{run_id}/model"
     client.create_model_version(
-        name="xgb_model",
+        name="model",
         source=model_uri,
         run_id=run_id
     )

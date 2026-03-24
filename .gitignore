@@ -3,6 +3,7 @@ ml_classifier.egg-info
 __pycache__
 build
 .conda
+.streamlit
 
 # Data
 data/**/*.csv

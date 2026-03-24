@@ -1,58 +1,207 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Credit Card Default Prediction</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .error { color: red; }
-        .success { color: green; }
-        /* Estilo global para botões */
-        input[type=submit] {
-            padding: 10px 20px;
+        /* Estilos Globais e Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #f4f7fb; /* Fundo cinza/azulado bem suave */
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container { 
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 600px; /* Reduzido para deixar os campos proporcionais */
+            padding: 40px; 
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); /* Sombra moderna */
+        }
+
+        /* Cabeçalhos */
+        h1 {
+            text-align: center;
+            color: #1a1a1a;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: #4a4a4a;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eef2f5;
+            padding-bottom: 8px;
+        }
+
+        /* Grupos de Formulário */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        /* Caixas de Texto, Número e Select */
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px; /* Tamanho confortável para leitura */
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            background-color: #fcfcfc;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #007bff; /* Azul padrão do LinkedIn/Tecnologia */
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+            background-color: #ffffff;
+        }
+
+        /* Botões */
+        input[type="submit"] {
+            width: 100%;
+            padding: 14px 20px;
             font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #0a66c2; /* Azul LinkedIn */
+            border: none;
+            border-radius: 8px;
             cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            margin-top: 10px;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #004182;
+        }
+
+        input[type="submit"]:active {
+            transform: scale(0.98);
+        }
+
+        /* Input de Arquivo */
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            border: 1px dashed #ced4da;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        /* Divisória */
+        hr {
+            border: 0;
+            height: 1px;
+            background: #eef2f5;
+            margin: 40px 0;
+        }
+
+        /* Mensagens e Resultados */
+        .error { 
+            color: #d93025; 
+            background-color: #fce8e6;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .predictions-box {
+            background-color: #282c34; /* Fundo escuro estilo terminal para os resultados */
+            color: #61dafb;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
+            margin-top: 15px;
+        }
+
+        p.upload-desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <h1>Credit Card Default Prediction</h1>
+
         <!-- Formulário manual -->
         <form action="/manual" method="post">
             <h2>Inserir dados manualmente</h2>
 
-            <label for="balance">Saldo:</label>
-            <input type="number" name="balance" required><br><br>
+            <div class="form-group">
+                <label for="balance">Saldo (Balance):</label>
+                <input type="number" name="balance" step="any" placeholder="Ex: 1500.00" required>
+            </div>
 
-            <label for="income">Renda:</label>
-            <input type="number" name="income" required><br><br>
+            <div class="form-group">
+                <label for="income">Renda (Income):</label>
+                <input type="number" name="income" step="any" placeholder="Ex: 45000" required>
+            </div>
 
-            <label for="student">Estudante:</label>
-            <select name="student" required>
-                <option value="1">Sim</option>
-                <option value="0">Não</option>
-            </select><br><br>
+            <div class="form-group">
+                <label for="student">É Estudante?</label>
+                <select name="student" required>
+                    <option value="" disabled selected>Selecione uma opção...</option>
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </select>
+            </div>
 
-            <input type="submit" value="Prever">
+            <input type="submit" value="Fazer Previsão">
         </form>
 
         <hr>
 
         <!-- Formulário de upload -->
-        <h1>Credit Card Default Prediction Interface</h1>
         <form action="/upload" method="post" enctype="multipart/form-data">
-            <p>Upload a CSV file com os atributos:</p>
+            <h2>Previsão em Lote (Upload)</h2>
+            <p class="upload-desc">Faça upload de um arquivo <strong>.CSV</strong> contendo as colunas de atributos:</p>
+            
             <input type="file" name="file" accept=".csv" required>
-            <input type="submit" value="Obter Previsões">
+            <input type="submit" value="Processar Arquivo CSV">
         </form>
 
         <!-- Exibição de erros ou previsões -->
         {% if error %}
-        <p class="error">{{ error }}</p>
+            <div class="error">⚠️ {{ error }}</div>
         {% endif %}
+
         {% if predictions %}
-        <h2>Previsões:</h2>
-        <pre>{{ predictions }}</pre>
+            <h2 style="margin-top: 30px; border:none;">Resultado da Previsão:</h2>
+            <div class="predictions-box">
+                <pre>{{ predictions }}</pre>
+            </div>
         {% endif %}
     </div>
 </body>

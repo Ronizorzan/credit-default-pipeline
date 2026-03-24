@@ -16,15 +16,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Columns mapper
+mapper_columns = {
+    "student_target_enc": "Estudante",
+    "balance_bin": "Saldo Devedor Atual",
+    "income": "Renda Anual",
+    "balance_over_mean_income": "Saldo Devedor vs Renda Média",
+    "balance_warning_zone": "Saldo Devedor 1000 - 2000",
+    "balance_income_ratio": "Razão Saldo Devedor vs Renda"
+}
+
 # -------------------------
 # Layout configuration
 # -------------------------
-st.set_page_config("Interpretabilidade de Modelo", page_icon="robot", layout="wide")
-st.sidebar.title("⚙️ Configurações")
-graph_type = st.sidebar.radio("Escolha o tipo de Explicação", options=["Importância Média", "Força de Explicação", "Summary Plot"])
-if graph_type=="Força de Explicação":
-    idx = st.sidebar.number_input("Selectione o ID do cliente", 1, 20000, 10)
-generate = st.sidebar.button("Gerar interpretação personalizada", type="primary")
+st.set_page_config("Inteligência de Risco & Transparência", page_icon="🛡️", layout="wide")
+st.sidebar.title("🛡️ Decisões Transparentes")
+st.sidebar.image("https://th.bing.com/th/id/OIG4.lgGfp80wbrub3nvTrEpw?pid=ImgGn", width=200)
+st.sidebar.markdown("<hr style='border: 1px solid; color: #03F277'>", unsafe_allow_html=True)
+st.sidebar.title("⚙️ Painel de Controle")
+
+with st.sidebar.expander("Selecione a Análise"):
+    graph_type = st.radio("Foco da Interpretação ->",
+                                options=["Visão Global de Risco", "Auditoria Individual", "Análise Multidimensional", "Interação de Fatores"], 
+                                help="Visão Global de Risco -> Entenda o comportamento geral da carteira.\
+                                \nAuditoria Individual -> Avalie o perfil de risco de um cliente específico.\
+                                \nAnálise Multidimensional -> Distribuição completa dos fatores de risco.\
+                                \nInteração de Fatores -> Descubra padrões complexos entre variáveis.")
+    
+    if graph_type=="Auditoria Individual":
+        idx = st.number_input("Selecione o ID do Cliente (Dossiê)", 1, 20000, 10)
+    if graph_type=="Interação de Fatores":
+        dependence_column = st.selectbox("Selecione o Fator Principal para gerar Análise Cruzada", options=mapper_columns.values())
+
+generate = st.sidebar.button("🚀 Extrair Insights Estratégicos", type="primary", use_container_width=True)
 
 # -------------------------
 # 1. Load test data
@@ -47,20 +71,25 @@ def load_xgb_model():
 # ----------------------------------
 # 2.1 Load Google LLM with Gemini
 # ----------------------------------
-#@st.cache_resource
+@st.cache_resource
 def load_llm():
     model_id = "gemini-2.5-flash"
     project_agent = Agent(model=Gemini(id=model_id, project_id="projetos-python-490617"),
-                          name="Interpretability Agent",
-                          role="Especialista em Explicabilidade de Modelos baseados em árvores",
+                          name="Risk Strategy Agent",
+                          role="Chief Risk Officer (CRO) Especialista em IA e Mitigação de Risco de Crédito",
                           markdown=True,
                           instructions=dedent(
                             """                            
-                            Gere um relatório executivo desse gráfico de Interpretabilidade do XGBoost com shap_values.
-                            Mantenha a linguagem direta, resumida, impactante e acessível, com foco em insights estratégicos para o negócio.                            
-                            O modelo prevê a probabilidade de 'default' em cartão de crédito.
-                            Ressalte que as análises são puramente técnicas e não tem o intuito, de forma alguma,
-                            de discriminar quaisquer tipos de classes sociais, sejam elas minoritárias ou não.
+                            Atue como um Especialista Sênior em Risco de Crédito explicando o modelo preditivo de inadimplência (default em cartão de crédito) para uma diretoria não-técnica.
+                            Gere um Relatório Executivo baseado no gráfico de interpretabilidade SHAP fornecido.
+                            
+                            **Diretrizes de Tom e Formatação:**
+                            - Use uma linguagem sofisticada, orientada a negócios, focada em impacto, ações e prevenção de perdas.
+                            - Estruture a resposta com cabeçalhos curtos para exibição em espaço limitado, bullet points e destaques em negrito para facilitar a leitura dinâmica.
+                            - Não adicione datas ou qualquer outro tipo de variável entre [].
+                            - NUNCA use jargões técnicos excessivos (como 'valores SHAP' ou 'log odds') sem explicar rapidamente seu impacto prático.
+                            - Ressalte a ética: Deixe claro em uma nota de rodapé que o modelo analisa exclusivamente variáveis transacionais e financeiras comportamentais,
+                              garantindo total imparcialidade e evitando vieses discriminatórios.
                             """
                           )
                           )
@@ -72,14 +101,6 @@ def load_llm():
 xgb_model = load_xgb_model()
 agent = load_llm()
 X, y = load_data()
-mapper_columns = {
-    "student_target_enc": "Estudante Universitário",
-    "balance_bin": "Saldo Devedor Atual",
-    "income": "Renda Anual",
-    "balance_over_mean_income": "Saldo Devedor vs Renda Média",
-    "balance_warning_zone": "Saldo Devedor 1000 - 2000",
-    "balance_income_ratio": "Razão Saldo Devedor vs Renda"
-}
 X.rename(columns=mapper_columns, inplace=True)
 inverse_mapper = {1: "Sim", 0: "Não"}
 
@@ -101,14 +122,16 @@ if "summary_plot" not in st.session_state:
 # --------------------------------------
 # 5. Mean-Importance-plot - Interative graph
 # --------------------------------------
-if graph_type=="Importância Média" and generate:    
-    graph_col, explain_col = st.columns([0.55, 0.45])    
+if graph_type=="Visão Global de Risco" and generate:    
+    st.markdown("<h1 style='text-align: center'>Principais Impulsionadores de Inadimplência</h1>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: 1px solid; color: #03F277'>", unsafe_allow_html=True)
+    graph_col, explain_col = st.columns([0.45, 0.45])    
     
     try:
         mean_shap = pd.DataFrame(
             {"feature": X.columns,
             "importance": abs(shap_values).mean(axis=0)}
-        ).sort_values("importance", ascending=False)
+        ).sort_values("importance", ascending=False).head(4)
 
         fig = px.bar(mean_shap.round(2), x="importance", y="feature",
                     labels={"importance": "Importância Média", "feature": "Característica"},
@@ -117,20 +140,19 @@ if graph_type=="Importância Média" and generate:
                     )
         
         with graph_col:
-            st.subheader("Features Importantes - Segundo o Modelo")
+            st.header("Principais Indicadores de Inadimplência")
             st.plotly_chart(fig, width="stretch")
 
         with explain_col:
+            st.subheader("💡 Relatório executivo")
             if st.session_state["mean_importance_analysis"] is not None:
                 st.markdown(st.session_state["mean_importance_analysis"])
             
             else:
-                with st.spinner("Gerando Gráfico de Importância Média"):
-                    response = agent.run(input=f"""Explique em linguagem simples o seguinte gráfico SHAP de Importância Média.
+                with st.spinner("🧠 Gerando Interpretação do Gráfico com IA"):
+                    response = agent.run(input=f"""Analise os dados globais  de risco e resuma os top 3 fatores críticos que impulsionam o 'default' na carteira.
                                     Mostre quais variáveis têm maior impacto nas decisões do Modelo e quais conclusões e recomendações
-                                    pode se extrair desses dados. Mantenha a análise simples e direta, sem torná-la extensa.
-                                    Ideal para ser exibido em um relatório executivo para stakeholders.                                
-                                    Baseie-se estritamente nos dados abaixo para embasar suas análises.
+                                    pode se extrair desses dados.
                                     "Dados do Gráfico Plotly": {mean_shap},
                                     "Colunas": {list(X.columns)},
                                     "Mapa de Cores": "Greens"
@@ -140,15 +162,24 @@ if graph_type=="Importância Média" and generate:
                 st.markdown(st.session_state["mean_importance_analysis"])
 
     except Exception as error:
-        st.error(f"""Erro ao processar requisição. Tente novamente...\nErro: {error}.
-                 Problemas ao utilizar o projeto? Deixe um comentário através do 
-                 formulário: http://100.54.239.46:5678/form/76aa90fc-ad5f-45fd-af23-4a09c8317016 """)    
+        st.error(f"""❌ Ocorreu um erro ao processar sua requisição. 
+                    Pedimos desculpas pelo inconveniente.
 
+                    🔄 Por favor, tente novamente em alguns instantes.  
+                    📝 Se o problema persistir, você pode registrar um comentário através do formulário:  
+                    http://100.54.239.46:5678/form/76aa90fc-ad5f-45fd-af23-4a09c8317016  
+
+                    📌 Detalhes técnicos do erro: {error}
+                    """
+                    )
+        
 # --------------------------------------
 # 6. Force-plot - Interative graph
 # --------------------------------------
-elif graph_type=="Força de Explicação" and generate:
-    graph_col, explain_col = st.columns([0.55, 0.45])    
+elif graph_type=="Auditoria Individual" and generate:
+    st.markdown("<h1 style='text-align: center'>📑 Dossiê de Decisão: Perfil de Risco Individual</h1>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: 1px solid; color: #03F277'>", unsafe_allow_html=True)
+    graph_col, explain_col = st.columns([0.45, 0.55])    
     try:        
         selected_instance = X.iloc[idx]        
         predicted = xgb_model.predict(np.reshape(selected_instance.values, (1, -1)))
@@ -168,38 +199,46 @@ elif graph_type=="Força de Explicação" and generate:
             marker=dict(color=instance_df["shap_value"], colorscale="Greens")
         ))
 
-        fig2.update_layout(title=f"Previsto: {inverse_mapper[predicted[0]]} - Real: {inverse_mapper[y_selected]}",
-                        xaxis_title="Impacto Médio no Modelo",
-                        yaxis_title="Feature")
+        fig2.update_layout(title=f"Decisão do Algoritmo - Previsto: {inverse_mapper[predicted[0]]} - Fato Real: {inverse_mapper[y_selected]}",
+                        xaxis_title="Influência na Decisão",
+                        yaxis_title="Variáveis")
         
         with graph_col:  
-            st.subheader(f"Interpretação de resultado para o cliente ID: {idx}")
+            st.header(f"📊 Interpretação para o cliente ID: {idx}")
             st.plotly_chart(fig2, width="stretch")
         
         with explain_col:
-            with st.spinner("Gerando Gráfico e Interpretação"):
-                response = agent.run(input=f"""Explique em linguagem simples o seguinte gráfico SHAP de Força de Explicação.
-                            Mostre, de forma clara e impactante, quais variáveis têm maior impacto nas decisões do Modelo
-                            sobre o cliente em questão e como isso se alinha com com o Previsto X Real.
-                            Mantenha a análise simples e direta, sem torná-la extensa.
-                            Ideal para ser exibido em um relatório executivo para stakeholders.
-                            Baseie-se estritamente nesses dados para embasar suas análises.                        
-                            Dados do Gráfico Plotly": {instance_df.to_dict(orient="records")}
-                            "Valor previsto": {inverse_mapper[predicted[0]]},
-                            "Valor Real": {inverse_mapper[y_selected]}                        
-                            """)
+            #st.subheader("💡 Relatório executivo")
+            with st.spinner("🔎 Gerando análise explicativa..."):
+                response = agent.run(input=f"""
+                    Explique de forma clara e impactante quais fatores tiveram maior influência na decisão do modelo
+                    para o cliente analisado. Relacione os resultados previstos com os resultados reais,
+                    destacando os principais drivers que orientam o risco individual.
+                    Dados do gráfico: {instance_df.to_dict(orient="records")}
+                    Valor previsto: {inverse_mapper[predicted[0]]}
+                    Valor real: {inverse_mapper[y_selected]}
+                """)
                                 
                 st.markdown(response.content)    
     
     except Exception as error:
-        st.error(f"Erro ao processar requisição. Tente novamente...\nErro: {error}")
+        st.error(f"""❌ Ocorreu um erro ao gerar a análise. 
+                    🔄 Por favor, tente novamente em alguns instantes.  
+                    📝 Se o problema persistir, registre um comentário através do formulário:   
+                    http://100.54.239.46:5678/form/76aa90fc-ad5f-45fd-af23-4a09c8317016   
+                    📌 Detalhes técnicos: {error}
+                    """)
+        
 
-elif graph_type=="Summary Plot" and generate:
-    st.markdown("<h1 style='text-align: center'>Interpretabilidade de Modelo", unsafe_allow_html=True)
-    st.markdown("<hr style=' border 1px; color: #50CCA0'>", unsafe_allow_html=True)
+# --------------------------------------
+# 7. Summary Plot - Análise Multidimensional
+# --------------------------------------
+elif graph_type=="Análise Multidimensional" and generate:
+    st.markdown("<h1 style='text-align: center'>🌐 Principais Fatores que Influenciam o Modelo", unsafe_allow_html=True)
+    st.markdown("<hr style='border: 1px solid; color: #03F277'>", unsafe_allow_html=True)
     try:
-        with st.spinner("Gerando Interpretação do Gráfico com IA. Por favor aguarde um instante..."):
-            graph_col, explain_col = st.columns([0.45, 0.55], gap="large")
+        with st.spinner("🔎 Gerando análise dos fatores..."):
+            graph_col, explain_col = st.columns([0.45, 0.55], gap="medium")
             
             fig3, ax = plt.subplots()
             shap.summary_plot(shap_values[:500], X[:500], show=False)
@@ -211,16 +250,16 @@ elif graph_type=="Summary Plot" and generate:
             agno_fig = AgnoImage(content=buffer.read())
 
             with graph_col:
-                st.subheader("Gráfico Summary - Plot")
+                st.header("📈 Gráfico de Importância das Variáveis")
                 st.pyplot(fig3, width="stretch")
             
             with explain_col:
-                st.subheader("Interpretação do Gráfico")
+                #st.subheader("💡 Relatório executivo")
                 if st.session_state["summary_plot"] is None:
-                    response = agent.run(input="""Explique o Gráfico Summary - Plot de maneira simples eficiente para executivos.
-                                        Foque nas Features mais importantes e preditivas para o modelo.
-                                        O objetivo é Desmistificar os insights do Gráfico, possibilitando que qualquer pessoa
-                                        possa entender o que o gráfico mostra através de linguagem de orientada à negócios.""",
+                    response = agent.run(input="""Explique o gráfico de forma clara e objetiva para executivos.
+                        Destaque os fatores mais relevantes que influenciam o modelo e que devem ser acompanhados
+                        para melhorar resultados. Traduza os achados em insights estratégicos que apoiem decisões de negócio,
+                        evitando jargões técnicos.""",
                                         images=[agno_fig])
                     
                     st.session_state["summary_plot"] = response.content            
@@ -231,6 +270,64 @@ elif graph_type=="Summary Plot" and generate:
             
     
     except Exception as error:
-        st.error(f"Erro ao processar requisição. Tente novamente...\nErro: {error}")
+        st.error(f"""❌ Ocorreu um erro ao gerar a análise. 
+                    🔄 Por favor, tente novamente em alguns instantes.  
+                    📝 Se o problema persistir, registre um comentário através do formulário:   
+                    http://100.54.239.46:5678/form/76aa90fc-ad5f-45fd-af23-4a09c8317016   
+                    📌 Detalhes técnicos: {error}
+                    """)
         
         
+# --------------------------------------
+# 8. Dependence Plot - Interação de Fatores
+# --------------------------------------
+elif graph_type=="Interação de Fatores" and generate:        
+    st.markdown("<h1 style='text-align: center; color: 2C3E50'>🔗 Interação entre Variáveis e Impacto no Modelo</h1>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: 1px solid; color: #03F277'>", unsafe_allow_html=True)
+    try:
+        with st.spinner("🔎 Gerando análise das interações..."):
+            graph_col, explain_col = st.columns([0.45, 0.55], gap="large")
+            
+            fig4, ax = plt.subplots()            
+            shap.dependence_plot(dependence_column, shap_values, X, ax=ax, feature_names=X.columns)
+            
+            buffer = io.BytesIO()
+            fig4.savefig(buffer, format="png")
+            buffer.seek(0)        
+        
+            agno_dependence_fig = AgnoImage(content=buffer.read())
+
+            with graph_col:
+                st.header("📈 Gráfico de Interação entre Variáveis")
+                st.pyplot(fig4, width="stretch")
+            
+            with explain_col:
+                #st.subheader("💡 Relatório executivo")
+                response = agent.run(input=dedent("""Explique o gráfico de forma clara e objetiva para executivos.
+                                    Mostre como a interação entre fatores influencia os resultados do modelo.
+                                    O objetivo é gerar insights estratégicos que apoiem decisões de negócio,
+                                    destacando quais combinações de variáveis têm maior impacto.
+                                            """),
+                                    images=[agno_dependence_fig])
+                                    
+                st.markdown(response.content)
+                                
+            
+    
+    except Exception as error:
+        st.error(f"""❌ Ocorreu um erro ao gerar a análise. 
+                    🔄 Por favor, tente novamente em alguns instantes.  
+                    📝 Se o problema persistir, registre um comentário através do formulário:   
+                    http://100.54.239.46:5678/form/76aa90fc-ad5f-45fd-af23-4a09c8317016
+                    --------
+                    📌 Detalhes técnicos: {error}
+                    """)
+    
+        
+
+
+
+
+
+
+

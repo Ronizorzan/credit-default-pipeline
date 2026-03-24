@@ -124,7 +124,7 @@ def create_routes(app: Flask) -> None:
             # Format predictions for display
             result = predictions.to_string()
 
-            return render_template("index.html", predictions=result)            
+            return render_template("index.html", predictions=result)
         
         except Exception as e:
             logger.error(

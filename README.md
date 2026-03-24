@@ -1,7 +1,11 @@
 # ML Classifier - 💳 Credit Card Default Prediction
 
-This project implements a data preprocessing pipeline for predicting credit card defaults, following best practices used in production environments.
+- A fully automated pipeline for credit card default prediction, built with production-grade best practices.
+- Data Source: [Kaggle Dataset](https://www.kaggle.com/datasets/d4rklucif3r/defaulter)
 
+- This project includes an independent Explainability Interface to provide transparency into model decisions.
+
+![XAI-Interface](Interface_xai.png)
 
 # 🔹 Objective:
 To create a solid and scalable foundation for data science and machine learning projects, enabling teams to reliably and auditably train, validate, and deploy models.
@@ -11,46 +15,48 @@ To create a solid and scalable foundation for data science and machine learning 
 ```
 /mlops_project
 ├── app/                          # Web application
-│   ├── __init__.py               # Package marker
 │   ├── main.py                   # Flask app with prediction API
 │   └── templates/                # HTML templates for web UI
 │       └── index.html            # Web interface for predictions
 ├── artifacts/                    # Preprocessing artifacts
+├── dags/                         # DAGs for orchestration
+│   └── ml_pipeline_dag.py        # Automated pipeline DAG
 ├── data/                         # Data storage
 │   ├── preprocessed/             # Cleaned data
 │   ├── processed/                # Feature-engineered data
 │   └── raw/                      # Raw dataset
 ├── metrics/                      # Model performance metrics
-├── models/                       # Trained model
+├── mlruns/                       # MLflow experiment tracking
+├── models/                       # Trained models
 ├── src/                          # Source code modules
-│   ├── __init__.py               # Package marker
 │   ├── data_loading/             # Data loading utilities
-│   │   ├── __init__.py           # Package marker
-│   │   └── load_data.py          # Dataset loading and preparation
+│   │  └── load_data.py           # Dataset loading and preparation
 │   ├── data_preprocessing/       # Data cleaning and splitting
-│   │   ├── __init__.py           # Package marker
-│   │   └── preprocess_data.py    # Data cleaning and imputation
+│   │  └── preprocess_data.py     # Data cleaning and imputation
 │   ├── feature_engineering/      # Feature transformation utilities
-│   │   ├── __init__.py           # Package marker
-│   │   └── engineer_features.py  # Feature scaling and transformation
+│   │  └── engineer_features.py   # Feature scaling and transformation
 │   ├── model_evaluation/         # Model evaluation scripts
-│   │   ├── __init__.py           # Package marker
-│   │   └── evaluate_model.py     # Model performance evaluation
+│   │  └── evaluate_model.py      # Model performance evaluation
 │   └── model_training/           # Model training scripts
-│       ├── __init__.py           # Package marker
-│       └── train_model.py        # Neural network training
+│       └── train_model.py        # XGBoost training
+├── xai.py                        # Explainable AI utilities (SHAP, interpretability)
+├── register_artifacts.py         # Pipeline artifact registration
+├── config.toml                   # General configuration
 ├── .dockerignore                 # Docker ignore rules
 ├── Dockerfile                    # Docker build instructions
+├── Dockerfile.airflow            # Dockerfile for Airflow
+├── docker-compose.airflow.yaml   # Compose for Airflow orchestration
 ├── params.yaml                   # Configuration parameters
 ├── pyproject.toml                # Python dependencies and project metadata
 └── README.md                     # Project documentation
+
 ```
 
 
 ## Features
 
 - **Data Pipeline**: Complete ETL pipeline from raw data to model-ready features
-- **Neural Network**: TensorFlow/Keras deep learning model with configurable architecture
+- **XGBoost Model**: XGBoost Classifier model with configurable architecture
 - **Web Interface**: Flask-based web application for making predictions
 - **Artifact Management**: Serialized models and preprocessors for deployment
 - **Evaluation Metrics**: Comprehensive model performance analysis
@@ -76,9 +82,12 @@ pip install -e .
 
 Model hyperparameters and data processing settings are configured in `params.yaml`.
 
-## Model Architecture
+## Model Architecture and techniques
 
-The neural network consists of a multilayer perceptron with 2 hidden layers.
+- **Model:** XGBoost, pre-trained in Kaggle with feature engineering techniques.
+- **Optimization:** Bayesian search for best hyperparameters
+- **Notebook Kaggle:** [Implementation here](https://www.kaggle.com/code/ronivanzorzanbarbosa/creditcarddefaultprediction-featureengineering)
+
 
 ## Artifacts
 
@@ -88,9 +97,10 @@ In the `models/` directory:
 - `xgb_model.joblib`: Trained XGBoostClssifier model
 
 In the `artifacts/` directory:
-- `[features]_mean_imputer.joblib`: Feature imputer for missing values
-- `[features]_scaler.joblib`: Standard scaler for feature normalization
-- `[target]_one_hot_encoder.joblib`: One-hot encoder for target labels
+- `balance_discretizer.joblib` : Balance Column Binnig
+- `preprocessor.joblib`: Missing value Imputation (numerical and categorical)
+- `feature_selector.joblib`: Best Features selection
+- `target_encoder.joblib`: Target-based categorical encoding
 
 ## Metrics
 
@@ -101,10 +111,10 @@ Model performance metrics are saved to:
 ## Development
 
 The project follows a modular structure with separate concerns:
-- **Data Loading**: Fetches and saves raw breast cancer dataset
+- **Data Loading**: Fetches and saves raw credit-card-default dataset
 - **Preprocessing**: Handles missing values and data splitting
-- **Feature Engineering**: Applies scaling transformations
-- **Model Training**: Builds and trains the neural network
+- **Feature Engineering**: Applies transformations to improve model metrics
+- **Model Training**: Builds and trains the XGBoost Classifier Model
 - **Model Evaluation**: Generates performance metrics
 - **Web Application**: Provides prediction interface
 
@@ -166,5 +176,8 @@ The web application will be available at `http://localhost:5001`.
 ### Making Predictions
 
 1. **Web Interface**: Upload a CSV file with breast cancer features through the web interface
-2. **API**: The `/upload` endpoint accepts CSV files and returns predictions
+2. **API** The `/manual` endpoint accepts manual insertions and return unique predictions
+3. **API**: The `/upload` endpoint accepts CSV files and returns predictions
+
+1[Web-Interfaca-app](Interface-app.png)
 

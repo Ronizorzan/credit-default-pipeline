@@ -1,5 +1,6 @@
 import yaml
 from pathlib import Path
+from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
@@ -25,7 +26,9 @@ default_args = {
 
 with DAG(
     "ml_pipeline",
-    default_args=default_args
+    default_args=default_args,
+    schedule_interval="@monthly",
+    start_date=datetime(2026, 1, 1)
 ) as dag:
     # DVC Pipeline Stages
     dvc_stages = get_dvc_stages()
@@ -54,8 +57,7 @@ with DAG(
         bash_command = """
         docker build -t ${DOCKER_HUB_USERNAME}/ml-classifier .
         echo ${DOCKER_HUB_TOKEN} | docker login -u ${DOCKER_HUB_USERNAME} --password-stdin
-        docker push ${DOCKER_HUB_USERNAME}/ml-classifier
-"""
+        docker push ${DOCKER_HUB_USERNAME}/ml-classifier"""     
     )
 
     # Set dependencies

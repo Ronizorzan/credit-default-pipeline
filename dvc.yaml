@@ -34,6 +34,7 @@ stages:
       - artifacts/target_encoder.joblib
 
   train:
+    always_changed: true  
     cmd: python -m src.model_training.train_model
     deps:
       - src/model_training/train_model.py

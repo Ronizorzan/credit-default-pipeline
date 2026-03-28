@@ -103,7 +103,7 @@ def save_training_artifacts(model: XGBClassifier) -> None:
 
 
 def train_model(train_data: pd.DataFrame, params:dict[str, dict[str, int | float]]) -> None:
-    """Train an XGBClassifier model, logging metrics and artifacts.
+    """Train a XGBClassifier model, logging metrics and artifacts.
 
     Args:
         train_data (pd.DataFrame): Training dataset
@@ -155,6 +155,9 @@ def train_model(train_data: pd.DataFrame, params:dict[str, dict[str, int | float
         mlflow.log_artifact("artifacts/feature_selector.joblib")
         mlflow.log_artifact("artifacts/preprocessor.joblib")
         mlflow.log_artifact("artifacts/target_encoder.joblib")
+
+        # Log Mlflow Model with consistent name
+        mlflow.xgboost.log_model(model, artifact_path="xgb_model")
 
 
 def main() -> None:

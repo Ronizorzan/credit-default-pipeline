@@ -4,12 +4,12 @@ USER root
 
 RUN groupadd airflow && usermod -aG airflow airflow
 
-COPY . /home/airflow/mlops_project
-RUN chown -R airflow:airflow /home/airflow/mlops_project
+COPY . /home/airflow/credit-default-pipeline 
+RUN chown -R airflow:airflow /home/airflow/credit-default-pipeline 
 
 USER airflow
 
-WORKDIR /home/airflow/mlops_project
+WORKDIR /home/airflow/credit-default-pipeline 
 
 RUN pip install .
 RUN dvc init --no-scm

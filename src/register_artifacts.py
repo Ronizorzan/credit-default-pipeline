@@ -17,23 +17,25 @@ def get_best_run(experiment_id: str, parent_run_id: str) -> pd.Series:
         
     Returns:
         The best run as a pandas Series
-    """
-    # Get all child runs for the parent
+    """    
+    # Get all child runs for the parent run
     child_runs = client.search_runs(
         experiment_ids=[experiment_id],
         filter_string=f"tags.mlflow.parentRunId = '{parent_run_id}'",
         order_by=["metrics.test_f1_weighted DESC"],
-        max_results=1000
-    )       
+        max_results=1000    
+    )           
+
     # Return the run with highest test accuracy
     return child_runs[0]
+
 
 def register_model() -> None:
     """Register the model that was logged during training."""
 
     logger.info("Registering model from latest MLflow run")
 
-    # Get the experiment ID for the 'ml_classification' experiment
+    # Get the experiment ID for the 'credit_card_experiment' experiment
     experiment_id = client.get_experiment_by_name("credit_card_experiment").experiment_id
 
     # Get the latest run from the experiment
@@ -56,18 +58,18 @@ def register_model() -> None:
             max_results=1
         )[0]
         run_id = best_run.info.run_id
-        logger.info(f"Using best run {run_id} with test_accuracy: {best_run.data.metrics['test_accuracy']:.2f}% and f1_score: {best_run.data.metrics['test_f1_weighted']:.2f}%")
+        logger.info(f"Using best run {run_id} with test_accuracy: {best_run.data.metrics['test_accuracy']*100:.2f}% and f1-score: {best_run.data.metrics['test_f1_weighted']*100:.2f}%")
 
     # Register the model from the run
     logger.info("Registering model")
     try:
-        client.create_registered_model("model")
+        client.create_registered_model("xgb_model")
     except mlflow.exceptions.MlflowException:
         logger.debug("Model already exists")
 
     model_uri = f"runs:/{run_id}/model"
     client.create_model_version(
-        name="model",
+        name="xgb_model",
         source=model_uri,
         run_id=run_id
     )

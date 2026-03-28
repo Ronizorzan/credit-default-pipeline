@@ -85,8 +85,8 @@ stages:
       size: 614665
     - path: src/model_training/train_model.py
       hash: md5
-      md5: 55adc4efc4f534a316b92f9d65606c34
-      size: 5017
+      md5: f6c22342a1228d0a004defd50d78929c
+      size: 5132
     params:
       params.yaml:
         train.colsample_bytree: 0.7583231848290068
@@ -103,8 +103,8 @@ stages:
       size: 624
     - path: models/xgb_model.joblib
       hash: md5
-      md5: 673d8e52eca88607f815331f2eda8aa6
-      size: 2243027
+      md5: 7ddd0de178a65cfdb65c8388b91e087e
+      size: 2243014
   evaluate:
     cmd: python -m src.model_evaluation.evaluate_model
     deps:
@@ -118,8 +118,8 @@ stages:
       size: 262999
     - path: models/xgb_model.joblib
       hash: md5
-      md5: 673d8e52eca88607f815331f2eda8aa6
-      size: 2243027
+      md5: 7ddd0de178a65cfdb65c8388b91e087e
+      size: 2243014
     - path: src/model_evaluation/evaluate_model.py
       hash: md5
       md5: 74ced7a3dc724e618c224831f8bed933

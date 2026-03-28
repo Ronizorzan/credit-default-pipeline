@@ -4,6 +4,7 @@ __pycache__
 build
 .conda
 .streamlit
+.vscode
 
 # Data
 data/**/*.csv

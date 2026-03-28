@@ -17,33 +17,45 @@ class ModelService:
         self._load_artifacts()
 
     def _load_artifacts(self) -> None:
-        """Load all artifacts from the local project folder."""
-        logger.info("Loading artifacts from local project folder")
+        """Load all artifacts from the local project folder."""        
         
+        # Sets DagsHub Tracking URI
+        mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
         
         # Load model from registry
         logger.info("Loading registered model from MLflow Model Registry")
-        self.model = mlflow.xgboost.load_model("models:/model/latest")
-
-        # Get run_id from model version metadata
+        self.model = mlflow.xgboost.load_model("models:/xgb_model/latest")
+                
         client = MlflowClient()
-        run_id = client.get_registered_model("model").latest_versions[0].run_id
-
-        # Load related artifacts
-        logger.info(f"Loading artifacts from run {run_id}")
-        artifacts_dir = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="")
-
-        # Define paths to the preprocessing artifacts
-        preprocessor_path = os.path.join(artifacts_dir, "preprocessor.joblib")
-        self.preprocessor = joblib.load(preprocessor_path)
-        balance_discretizer_path = os.path.join(artifacts_dir, "balance_discretizer.joblib")
-        self.balance_discretizer = joblib.load(balance_discretizer_path)
-        target_encoder_path = os.path.join(artifacts_dir, "target_encoder.joblib")
-        self.target_encoder = joblib.load(target_encoder_path)
-        feature_selector_path = os.path.join(artifacts_dir, "feature_selector.joblib")
-        self.feature_selector = joblib.load(feature_selector_path)
+        run_id = client.get_registered_model("xgb_model").latest_versions[0].run_id
         
-        logger.info("Successfully loaded model and related artifacts")
+
+        logger.info(f"Loading model from run_id={run_id}")        
+
+
+        try:
+            if run_id is not None:
+                # Load related artifacts
+                logger.info(f"Loading artifacts from run {run_id}")
+                artifacts_dir = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="")
+
+                # Define paths to the preprocessing artifacts
+                preprocessor_path = os.path.join(artifacts_dir, "preprocessor.joblib")
+                self.preprocessor = joblib.load(preprocessor_path)
+                balance_discretizer_path = os.path.join(artifacts_dir, "balance_discretizer.joblib")
+                self.balance_discretizer = joblib.load(balance_discretizer_path)
+                target_encoder_path = os.path.join(artifacts_dir, "target_encoder.joblib")
+                self.target_encoder = joblib.load(target_encoder_path)
+                feature_selector_path = os.path.join(artifacts_dir, "feature_selector.joblib")
+                self.feature_selector = joblib.load(feature_selector_path)
+                
+                logger.info("Successfully loaded model and related artifacts")            
+        except Exception as error:
+            logger.error(f"Error loading artifacts from repository: {error}")
+        
+
+        #self.model = mlflow.xgboost.load_model("models:/xgb_model/latest")
+
 
 
         

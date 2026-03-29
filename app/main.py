@@ -27,9 +27,7 @@ class ModelService:
         self.model = mlflow.xgboost.load_model("models:/xgb_model/latest")
                 
         client = MlflowClient()
-        run_id = client.get_registered_model("xgb_model").latest_versions[0].run_id
-        
-
+        run_id = client.get_registered_model("xgb_model").latest_versions[0].run_id        
         logger.info(f"Loading model from run_id={run_id}")        
 
 

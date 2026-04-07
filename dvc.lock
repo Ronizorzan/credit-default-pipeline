@@ -103,8 +103,8 @@ stages:
       size: 624
     - path: models/xgb_model.joblib
       hash: md5
-      md5: 7ddd0de178a65cfdb65c8388b91e087e
-      size: 2243014
+      md5: 4e7bc9e6c55c656dc563d1a0056785e4
+      size: 2242942
   evaluate:
     cmd: python -m src.model_evaluation.evaluate_model
     deps:
@@ -118,8 +118,8 @@ stages:
       size: 262999
     - path: models/xgb_model.joblib
       hash: md5
-      md5: 7ddd0de178a65cfdb65c8388b91e087e
-      size: 2243014
+      md5: 4e7bc9e6c55c656dc563d1a0056785e4
+      size: 2242942
     - path: src/model_evaluation/evaluate_model.py
       hash: md5
       md5: 74ced7a3dc724e618c224831f8bed933

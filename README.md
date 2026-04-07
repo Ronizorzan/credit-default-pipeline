@@ -3,6 +3,28 @@
 - A fully automated pipeline for credit card default prediction, built with production-grade best practices.
 - Data Source: [Kaggle Dataset](https://www.kaggle.com/datasets/d4rklucif3r/defaulter)
 
+# Model Impact on Loss
+The credit default detection model demonstrates clear financial value by **significantly reducing potential losses:**
+
+- 1).	Baseline (no model):
+*100 defaults undetected → Estimated losses of $500,000 (assuming a mean of $5,000 per default.).*
+- 2).	With model deployed:
+*71 defaults correctly identified, only 29 missed → Losses reduced to $145,000.*
+- 3). Impact:
+*$355,000 in losses avoided, representing a 71% reduction in potential credit losses.*
+*Liquid ROI of $305,000 considering implementation cost of $50,000.*
+
+![Model metrics](interface_and_roi/model_metrics.png)
+
+## Key Takeaways
++ 1). High recall (71%) on the default class ensures the majority of risky customers are flagged.
++ 2). Even with moderate precision, the business benefit is substantial: fewer undetected defaults directly translate into reduced financial exposure.
++ 3). This model delivers measurable ROI by protecting revenue streams and improving portfolio resilience.
+
+![Model ROI](interface_and_roi/financial_impact.png)
+
+# Explainability Interface
+
 - This project includes an independent Explainability Interface to provide transparency into model decisions.
 
 ![XAI-Interface](Interface_xai.png)
@@ -25,6 +47,8 @@ To create a solid and scalable foundation for data science and machine learning 
 │   ├── preprocessed/             # Cleaned data
 │   ├── processed/                # Feature-engineered data
 │   └── raw/                      # Raw dataset
+├── interface_and_roi             # Interface samples and ROI impact - IMAGES
+├── kaggle_extraction...          # Feature Engineering and best-params search
 ├── metrics/                      # Model performance metrics
 ├── mlruns/                       # MLflow experiment tracking
 ├── models/                       # Trained models
@@ -179,5 +203,5 @@ The web application will be available at `http://localhost:5001`.
 2. **API** The `/manual` endpoint accepts manual insertions and return unique predictions
 3. **API**: The `/upload` endpoint accepts CSV files and returns predictions
 
-1[Web-Interfaca-app](Interface-app.png)
+![Web-Interfaca-app](Interface-app.png)
 

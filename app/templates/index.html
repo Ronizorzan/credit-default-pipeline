@@ -157,39 +157,39 @@
 
         <!-- Formulário manual -->
         <form action="/manual" method="post">
-            <h2>Inserir dados manualmente</h2>
+            <h2>Insert data manually</h2>
 
             <div class="form-group">
                 <label for="balance">Saldo (Balance):</label>
-                <input type="number" name="balance" step="any" placeholder="Ex: 1500.00" required>
+                <input type="number" name="balance" step="any" placeholder="E.g: 1500.00" required>
             </div>
 
             <div class="form-group">
                 <label for="income">Renda (Income):</label>
-                <input type="number" name="income" step="any" placeholder="Ex: 45000" required>
+                <input type="number" name="income" step="any" placeholder="E.g: 45000" required>
             </div>
 
             <div class="form-group">
-                <label for="student">É Estudante?</label>
+                <label for="student">Student?</label>
                 <select name="student" required>
-                    <option value="" disabled selected>Selecione uma opção...</option>
-                    <option value="1">Sim</option>
-                    <option value="0">Não</option>
+                    <option value="" disabled selected>Select an option...</option>
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
                 </select>
             </div>
 
-            <input type="submit" value="Fazer Previsão">
+            <input type="submit" value="Generate Prediction">
         </form>
 
         <hr>
 
         <!-- Formulário de upload -->
         <form action="/upload" method="post" enctype="multipart/form-data">
-            <h2>Previsão em Lote (Upload)</h2>
-            <p class="upload-desc">Faça upload de um arquivo <strong>.CSV</strong> contendo as colunas de atributos:</p>
+            <h2>Batch Forecast (Upload)</h2>
+            <p class="upload-desc">Upload a file <strong>.CSV</strong> containing the attribute columns:</p>
             
             <input type="file" name="file" accept=".csv" required>
-            <input type="submit" value="Processar Arquivo CSV">
+            <input type="submit" value="Process CSV file">
         </form>
 
         <!-- Exibição de erros ou previsões -->
@@ -198,7 +198,7 @@
         {% endif %}
 
         {% if predictions %}
-            <h2 style="margin-top: 30px; border:none;">Resultado da Previsão:</h2>
+            <h2 style="margin-top: 30px; border:none;">Prediction Result:</h2>
             <div class="predictions-box">
                 <pre>{{ predictions }}</pre>
             </div>

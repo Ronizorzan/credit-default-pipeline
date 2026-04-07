@@ -8,6 +8,9 @@ services:
       - POSTGRES_DB=airflow
     networks:
       - backend
+    #volumes:
+    #  - /mnt/d/docker_volumes/postgres:/var/lib/postgresql/data
+
 
   dind:
     image: docker:24.0.5-dind
@@ -18,6 +21,9 @@ services:
       - DOCKER_TLS_CERTDIR=
     networks:
       - backend
+   # volumes:
+   #   - /mnt/d/docker_volumes/dind:/var/lib/docker
+
 
   airflow:
     build:
@@ -46,6 +52,9 @@ services:
       (airflow scheduler &) &&
       airflow webserver
       "
+    #volumes:
+    #  - /mnt/d/docker_volumes/airflow:/opt/airflow
+
 
 networks:
   backend:

@@ -101,10 +101,10 @@ class ModelService:
 
 
         # Get model predictions
-        y_pred = self.model.predict(X_selected)
+        y_pred = self.model.predict(X_selected)         
         
-
-        return pd.DataFrame({"Prediction": y_pred}, index=features.index)
+        
+        return pd.DataFrame({"Prediction": y_pred}, index=features.index)["Prediction"].map({0: "Non-default", 1: "Default"})
 
 
 def create_routes(app: Flask) -> None:

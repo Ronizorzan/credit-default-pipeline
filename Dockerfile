@@ -2,13 +2,13 @@
 FROM python:3.12-slim
 
 # Copy the entire project
-COPY . credit_default_pipeline/
+COPY . mlops_project/
 
 # Install the package with dependencies
-RUN pip install ./credit_default_pipeline
+RUN pip install ./mlops_project
 
 # Set the Working Directory
-WORKDIR /credit_default_pipeline
+WORKDIR /mlops_project
 
 # Expose the port gunicorn will listen on
 EXPOSE 5001

@@ -21,14 +21,14 @@ def register_artifacts_callable():
 
 default_args = {
     "owner": "airflow",
-    "retries": 1,
+    "retries": 1
 }
 
 with DAG(
     "ml_pipeline",
     default_args=default_args,
     schedule_interval="@monthly",
-    start_date=datetime(2026, 1, 1)
+    start_date=datetime(2026, 4, 1)
 ) as dag:
     # DVC Pipeline Stages
     dvc_stages = get_dvc_stages()
@@ -55,9 +55,9 @@ with DAG(
         cwd=project_root,
         #bash_command = "docker build -t ml-classifier ."
         bash_command = """
-        docker build -t ${DOCKER_HUB_USERNAME}/ml-classifier .
+        docker build -t ${DOCKER_HUB_USERNAME}/mlops_project .
         echo ${DOCKER_HUB_TOKEN} | docker login -u ${DOCKER_HUB_USERNAME} --password-stdin
-        docker push ${DOCKER_HUB_USERNAME}/ml-classifier"""     
+        docker push ${DOCKER_HUB_USERNAME}/mlops_project"""     
     )
 
     # Set dependencies
